@@ -380,15 +380,46 @@ def plot_lasso_score(ml_l, ml_m, theta_scores: list, se_scores: list, alpha: flo
 
 #coverage calculation
 def cover_true(theta, confint):
+
     """
 
     Function to check whether theta is contained in confindence interval.
     Returns 1 if true and 0 otherwise.
     
     """
+
     covers_theta = (confint[0] < theta and theta < confint[1])
     
     if covers_theta:
         return 1
     else:
         return 0
+    
+def coverage(theta, dml_objects):
+
+    """
+
+    Calculates the percentage of thetas in confidence intervals across a list of fitted dml objects.
+
+    TODO
+    """
+
+    num_coverages = sum([cover_true(theta, obj.confint().loc['d']) for obj in dml_objects])
+    coverage_ = num_coverages/len(dml_objects)
+
+    return coverage_
+
+# calculation of absolute bias
+
+def abs_bias(theta_true, est_thetas):
+
+    """
+
+    Calculates absolute bias between true and estimated causal parameter.
+
+    TODO
+    """
+
+    abs_bias = np.abs(est_thetas - theta_true).mean()
+    return abs_bias
+    
