@@ -128,13 +128,14 @@ def make_BCH2014_data(theta = 0.5, n_obs=100, dim_x = 200, rho = 0.5,
     #return x, y, d, true_betas, orcl_rmse, dgp_info
     return x, y, d, true_betas, dgp_info
 
+"""
 # compute in- and out-of-sample MSE
 def plr_in_and_out_of_sample_mse(dml_plr_obj: dml.DoubleMLPLR, 
                                  ml_l_dml_model, ml_m_dml_model, 
                                  dml_train_data_obj: dml.DoubleMLData, 
                                  dml_test_data_obj: dml.DoubleMLData):
 
-    """
+    
     
     Computes MSE of Model Predictions in Training- and Test-Data.
 
@@ -148,7 +149,7 @@ def plr_in_and_out_of_sample_mse(dml_plr_obj: dml.DoubleMLPLR,
     Returns:
         in_sample_mse, out_of_sample_mse (float): mean squared errors to detect performance of the model.
     
-    """
+    
 
     X_train = dml_train_data_obj.data.drop(['y', 'd'], axis=1).to_numpy()
     y_train = dml_train_data_obj.data['y'].to_numpy()
@@ -171,9 +172,10 @@ def plr_in_and_out_of_sample_mse(dml_plr_obj: dml.DoubleMLPLR,
     out_of_sample_mse = np.mean((y_test - y_pred_test)**2)
 
     return in_sample_mse, out_of_sample_mse
+"""
 
 # PLR gradient boosting simulation
-def simulate_gb_plr(data, train_test_split: float, ml_l, ml_m, ml_g=None, n_folds=1, score='partialling out', random_seed=1312):
+def simulate_gb_plr(data, ml_l, ml_m, ml_g=None, n_folds=1, score='partialling out', random_seed=1312):
 
     """
     Fits data and nuisance models as gradient boosting to PLR model.
@@ -207,19 +209,18 @@ def simulate_gb_plr(data, train_test_split: float, ml_l, ml_m, ml_g=None, n_fold
 
         n_obs = dml_obj_data.n_obs
 
-        dml_obj_data_train = dml.DoubleMLData(dml_obj_data.data[:int((1-train_test_split)*n_obs)], 'y', 'd')
-        dml_obj_data_test = dml.DoubleMLData(dml_obj_data.data[int((1-train_test_split)*n_obs):], 'y', 'd')
+        dml_obj_data = dml.DoubleMLData(dml_obj_data.data, 'y', 'd')
 
         if n_folds == 1: apply_cross_fitting = False
 
         if score == 'partialling out':
-            dml_plr_obj = dml.DoubleMLPLR(dml_obj_data_train,
+            dml_plr_obj = dml.DoubleMLPLR(dml_obj_data,
                                         ml_l, ml_m,
                                         n_folds=n_folds,
                                         score=score,
                                         apply_cross_fitting=apply_cross_fitting)
         elif score == 'IV-type':
-            dml_plr_obj = dml.DoubleMLPLR(dml_obj_data_train,
+            dml_plr_obj = dml.DoubleMLPLR(dml_obj_data,
                                         ml_l, ml_m, ml_g,
                                         n_folds=n_folds,
                                         score=score,
@@ -242,7 +243,7 @@ def simulate_gb_plr(data, train_test_split: float, ml_l, ml_m, ml_g=None, n_fold
 
 
 # PLR lasso simulation
-def simulate_lasso_plr(data, train_test_split: float, ml_l, ml_m, ml_g=None, 
+def simulate_lasso_plr(data, ml_l, ml_m, ml_g=None, 
                        apply_cross_fitting=True, n_folds=1, score='partialling out', random_seed=1312):
 
     """
@@ -250,7 +251,6 @@ def simulate_lasso_plr(data, train_test_split: float, ml_l, ml_m, ml_g=None,
 
     Args:
         data: list of repetitions or single data tuple.
-        train_test_split (float): percentage of data used for validation.
         ml_l: g(X) for regression on Y.
         ml_m: m(X) for regression on D.
         ml_g: g(X) optional if IV-type score is chosen.
@@ -280,8 +280,6 @@ def simulate_lasso_plr(data, train_test_split: float, ml_l, ml_m, ml_g=None,
     lasso_alphas = []
 
     dml_plr_objects = []
-    in_sample_mses = []
-    out_of_sample_mses = []
 
     for i_rep in range(n_rep):
         
@@ -295,8 +293,7 @@ def simulate_lasso_plr(data, train_test_split: float, ml_l, ml_m, ml_g=None,
 
         n_obs = dml_obj_data.n_obs
 
-        dml_obj_data_train = dml.DoubleMLData(dml_obj_data.data[:int((1-train_test_split)*n_obs)], 'y', 'd')
-        dml_obj_data_test = dml.DoubleMLData(dml_obj_data.data[int((1-train_test_split)*n_obs):], 'y', 'd')
+        dml_obj_data = dml.DoubleMLData(dml_obj_data.data, 'y', 'd')
 
         # cross fitting is only possible if dataset is split into more than one fold
         if n_folds == 1: apply_cross_fitting = False
@@ -304,13 +301,13 @@ def simulate_lasso_plr(data, train_test_split: float, ml_l, ml_m, ml_g=None,
         # the score decides wether another nuisance function for an instrumental variable is required (IV-type)
         # or partialling out chosen
         if score == 'partialling out':
-            dml_plr_obj = dml.DoubleMLPLR(dml_obj_data_train,
+            dml_plr_obj = dml.DoubleMLPLR(dml_obj_data,
                                         ml_l, ml_m,
                                         n_folds=n_folds,
                                         score=score,
                                         apply_cross_fitting=apply_cross_fitting)
         elif score == 'IV-type':
-            dml_plr_obj = dml.DoubleMLPLR(dml_obj_data_train,
+            dml_plr_obj = dml.DoubleMLPLR(dml_obj_data,
                                         ml_l, ml_m, ml_g,
                                         n_folds=n_folds,
                                         score=score,
@@ -320,36 +317,10 @@ def simulate_lasso_plr(data, train_test_split: float, ml_l, ml_m, ml_g=None,
 
         dml_plr_obj.fit(store_models=True)
 
-        if n_folds > 1:
-
+        if lassocv_flag:
             for fit in range(n_folds):
-                if lassocv_flag:
-                    lasso_alphas.append((dml_plr_obj.models['ml_l']['d'][0][fit].alpha_,
-                                        dml_plr_obj.models['ml_m']['d'][0][fit].alpha_))
-                train_first_indexes = dml_plr_obj.smpls[0][fit][0]
-                train_data_fit = dml.DoubleMLData(dml_obj_data_train.data.iloc[train_first_indexes],
-                                                  'y', 'd')
-                in_sample_mse, out_of_sample_mse = plr_in_and_out_of_sample_mse(
-                    dml_plr_obj,
-                    dml_plr_obj.models['ml_l']['d'][0][fit],
-                    dml_plr_obj.models['ml_m']['d'][0][fit],
-                    train_data_fit,
-                    dml_obj_data_test
-                )
-                in_sample_mses.append(in_sample_mse)
-                out_of_sample_mses.append(out_of_sample_mse)
-
-        else:
-            
-            in_sample_mse, out_of_sample_mse = plr_in_and_out_of_sample_mse(
-                dml_plr_obj,
-                dml_plr_obj.models['ml_l']['d'][0][0],
-                dml_plr_obj.models['ml_m']['d'][0][0],
-                dml_obj_data_train,
-                dml_obj_data_test
-            )
-            in_sample_mses.append(in_sample_mse)
-            out_of_sample_mses.append(out_of_sample_mse)
+                lasso_alphas.append((dml_plr_obj.models['ml_l']['d'][0][fit].alpha_,
+                                     dml_plr_obj.models['ml_m']['d'][0][fit].alpha_))
 
         this_theta = dml_plr_obj.coef[0]
         this_se = dml_plr_obj.se[0]
@@ -359,7 +330,7 @@ def simulate_lasso_plr(data, train_test_split: float, ml_l, ml_m, ml_g=None,
 
         dml_plr_objects.append(dml_plr_obj)
 
-    return theta_scores, se_scores, dml_plr_objects, in_sample_mses, out_of_sample_mses, lasso_alphas
+    return theta_scores, se_scores, dml_plr_objects, lasso_alphas
 
 # plot theta distribution from Lasso Regression
 def plot_lasso_score(ml_l, ml_m, theta_scores: list, se_scores: list, alpha: float):
