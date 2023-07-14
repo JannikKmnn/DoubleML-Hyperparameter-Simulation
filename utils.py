@@ -445,6 +445,7 @@ def plot_lasso_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
     return coverage_scores, bias_scores
 
 def plot_lasso_abs_bias(ml_l_hyperparameters, ml_m_hyperparameters, bias_scores,
+                        title="Hyperparameter Combinations for Lasso Regression: Absolute Bias",
                         save_fig=True, filename=""):
 
     """
@@ -456,7 +457,7 @@ def plot_lasso_abs_bias(ml_l_hyperparameters, ml_m_hyperparameters, bias_scores,
     pivot_table_bias = lasso_bias_df.pivot(index='ml_l_alphas', columns='ml_m_alphas', values='bias')
 
     plt.figure(figsize=(2.5*len(ml_l_hyperparameters), 2*len(ml_m_hyperparameters)))
-    plt.title("Hyperparameter Combinations for Lasso Regression: Absolute Bias", fontsize=14)
+    plt.title(f"{title}", fontsize=14)
     sns.heatmap(pivot_table_bias, cmap='summer_r', annot=True)
     plt.xlabel('$\\lambda_{m_{0}(x)}$', fontsize=14)
     plt.ylabel('$\\lambda_{g_{0}(x)}$', fontsize=14)
@@ -467,6 +468,7 @@ def plot_lasso_abs_bias(ml_l_hyperparameters, ml_m_hyperparameters, bias_scores,
     plt.show()
 
 def plot_lasso_coverage(ml_l_hyperparameters, ml_m_hyperparameters, coverage_scores,
+                        title="Hyperparameter Combinations for Lasso Regression: Coverage (%)",
                         save_fig=True, filename=""):
     
     """
@@ -478,8 +480,8 @@ def plot_lasso_coverage(ml_l_hyperparameters, ml_m_hyperparameters, coverage_sco
     pivot_table_coverage = lasso_coverage_df.pivot(index='ml_l_alphas', columns='ml_m_alphas', values='coverage')
 
     plt.figure(figsize=(2.5*len(ml_l_hyperparameters), 2*len(ml_m_hyperparameters)))
-    plt.title("Hyperparameter Combinations for Lasso Regression: Coverage (%)", fontsize=14)
-    sns.heatmap(pivot_table_coverage, cmap='summer', annot=True)
+    plt.title(f"{title}", fontsize=14)
+    sns.heatmap(pivot_table_coverage, cmap='summer', annot=True, fmt='.2f')
     plt.xlabel('$\\lambda_{m_{0}(x)}$', fontsize=14)
     plt.ylabel('$\\lambda_{g_{0}(x)}$', fontsize=14)
 
@@ -487,6 +489,14 @@ def plot_lasso_coverage(ml_l_hyperparameters, ml_m_hyperparameters, coverage_sco
         plt.savefig(f"plots/{filename}", facecolor="white")
 
     plt.show()
+
+# TODO write cv results function
+
+def plot_cv_combinations():
+    """
+    
+    """
+    pass
 
 #coverage calculation
 def cover_true(theta, confint):
