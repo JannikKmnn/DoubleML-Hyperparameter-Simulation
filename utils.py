@@ -1,6 +1,7 @@
 import numpy as np
 import doubleml as dml
 import seaborn as sns
+import pandas as pd
 import matplotlib.pyplot as plt
 
 from scipy import stats
@@ -376,6 +377,115 @@ def plot_lasso_score(ml_l, ml_m, theta_scores: list, se_scores: list, alpha: flo
     ax.set_xlabel('$(\hat{\\theta}_0 - \\theta_0)/\hat{\sigma}$')
 
     plt.tight_layout()
+    plt.show()
+
+# plot results
+
+def plot_lasso_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
+                                 n_folds, data, true_alpha,
+                                 face_colors = sns.color_palette('summer_r'),
+                                 edge_colors = sns.color_palette('dark'),
+                                 title="Hyperparameter Variation for Lasso Regression",
+                                 save_figure=True,
+                                 filename=""):
+    """
+    Simulates different hyperparameter combinations, plots the estimated distributions and returns absolute bias and coverage.
+
+    Args:
+        TODO
+
+    Returns:
+        TODO
+    """
+
+    xx = np.arange(-5, +5, 0.001)
+    yy = stats.norm.pdf(xx)
+
+    coverage_scores = dict()
+    bias_scores = dict()
+
+    fig, axs = plt.subplots(len(ml_l_hyperparameters), len(ml_m_hyperparameters), 
+                            figsize=(10*len(ml_l_hyperparameters), 10*len(ml_m_hyperparameters)), 
+                            constrained_layout=True)
+
+    fig.suptitle(title, fontsize=30)
+
+    for i_ml_m in ml_m_hyperparameters:
+        for i_ml_l in ml_l_hyperparameters:
+
+            i_m = ml_m_hyperparameters.index(i_ml_m)
+            i_l = ml_l_hyperparameters.index(i_ml_l)
+
+            ml_l = Lasso(alpha=i_ml_l)
+            ml_m = Lasso(alpha=i_ml_m)
+            
+            theta_scores, se_scores, plr_objects, _ = simulate_lasso_plr(ml_l=ml_l, ml_m=ml_m, 
+                                                        n_folds=n_folds, data=data,
+                                                        score='partialling out')
+            
+            coverage_score = coverage(true_alpha, plr_objects)
+            coverage_scores[(i_ml_l, i_ml_m)] = coverage_score
+
+            absolute_bias = abs_bias(true_alpha, theta_scores)
+            bias_scores[(i_ml_l, i_ml_m)] = absolute_bias
+
+            axs[i_l, i_m].hist((theta_scores - true_alpha)/se_scores,
+                                color=face_colors[2], edgecolor = edge_colors[2],
+                                density=True, bins=30, label='Double ML Lasso')
+            axs[i_l, i_m].axvline(0., color='k')
+            axs[i_l, i_m].plot(xx, yy, color='k', label='$\\mathcal{N}(0, 1)$')
+            #axs[i_l, i_m].legend(loc='upper right', bbox_to_anchor=(1.2, 1.0))
+            axs[len(ml_l_hyperparameters)-1, i_m].set_xlabel('$\\lambda_{m_{0}(x)}$=' + f'{i_ml_m}', fontsize=20)
+            axs[i_l, 0].set_ylabel('$\\lambda_{g_{0}(x)}$=' + f'{i_ml_l}', fontsize=20)
+            axs[i_l, i_m].set_xlim([-6., 6.])
+
+    if save_figure: 
+        plt.savefig(f"plots/{filename}", facecolor="white")
+
+    return coverage_scores, bias_scores
+
+def plot_lasso_abs_bias(ml_l_hyperparameters, ml_m_hyperparameters, bias_scores,
+                        save_fig=True, filename=""):
+
+    """
+    TODO write function documentation
+    """
+    
+    bias_list = [(k[0], k[1], v) for k, v in bias_scores.items()]
+    lasso_bias_df = pd.DataFrame(bias_list, columns=['ml_l_alphas', 'ml_m_alphas', 'bias'])
+    pivot_table_bias = lasso_bias_df.pivot(index='ml_l_alphas', columns='ml_m_alphas', values='bias')
+
+    plt.figure(figsize=(2.5*len(ml_l_hyperparameters), 2*len(ml_m_hyperparameters)))
+    plt.title("Hyperparameter Combinations for Lasso Regression: Absolute Bias", fontsize=14)
+    sns.heatmap(pivot_table_bias, cmap='summer_r', annot=True)
+    plt.xlabel('$\\lambda_{m_{0}(x)}$', fontsize=14)
+    plt.ylabel('$\\lambda_{g_{0}(x)}$', fontsize=14)
+
+    if save_fig:
+        plt.savefig(f"plots/{filename}", facecolor="white")
+
+    plt.show()
+
+def plot_lasso_coverage(ml_l_hyperparameters, ml_m_hyperparameters, coverage_scores,
+                        save_fig=True, filename=""):
+    
+    """
+    TODO write function documentation
+    """
+
+    coverage_list = [(k[0], k[1], v*100) for k, v in coverage_scores.items()]
+    lasso_coverage_df = pd.DataFrame(coverage_list, columns=['ml_l_alphas', 'ml_m_alphas', 'coverage'])
+    pivot_table_coverage = lasso_coverage_df.pivot(index='ml_l_alphas', columns='ml_m_alphas', values='coverage')
+
+    plt.figure(figsize=(2.5*len(ml_l_hyperparameters), 2*len(ml_m_hyperparameters)))
+    plt.title("Hyperparameter Combinations for Lasso Regression: Coverage (%)", fontsize=14)
+    sns.heatmap(pivot_table_coverage, cmap='summer', annot=True)
+    plt.xlabel('$\\lambda_{m_{0}(x)}$', fontsize=14)
+    plt.ylabel('$\\lambda_{g_{0}(x)}$', fontsize=14)
+
+    if save_fig:
+        plt.savefig(f"plots/{filename}", facecolor="white")
+
     plt.show()
 
 #coverage calculation
