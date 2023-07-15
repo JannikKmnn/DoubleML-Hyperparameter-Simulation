@@ -17,6 +17,17 @@ from scipy.linalg import toeplitz
 import warnings
 warnings.filterwarnings('ignore', category = ConvergenceWarning)
 
+# Prepare Simulations as Objects
+class Data_Generation:
+
+    def __init__(self):
+        pass
+
+class Lasso_Simulation:
+
+    def __init__(self):
+        pass
+
 # create dataset
 def make_data_list(n_rep: int, n_obs: int, n_vars: int, model_type: str, \
                    dim_z=None, R2_d=None, R2_y=None, alpha=0.5, alpha_x=None, random_seed=1312):
