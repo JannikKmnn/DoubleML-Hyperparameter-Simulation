@@ -20,8 +20,11 @@ warnings.filterwarnings('ignore', category = ConvergenceWarning)
 # Prepare Simulations as Objects
 class Data_Generation:
 
-    def __init__(self):
-        pass
+    def __init__(self, 
+                 ml_l_hyperparameters: list,
+                 ml_m_hyperparameters: list):
+        self.ml_l_hyperparameters = ml_l_hyperparameters
+        self.ml_m_hyperparameters = ml_m_hyperparameters
 
 class Lasso_Simulation:
 
@@ -96,7 +99,7 @@ def make_BCH2014_data_list(n_rep: int, theta = 0.5, n_obs=100, dim_x = 200, rho 
 def make_BCH2014_data(theta = 0.5, n_obs=100, dim_x = 200, rho = 0.5,
                 R2_d = 0.5, R2_y = 0.5, design = '1a', random_seed=1312):
     
-    np.random.seed(1312)
+    np.random.seed(random_seed)
     
     v = np.random.standard_normal(size=[n_obs, ])
     zeta = np.random.standard_normal(size=[n_obs, ])
@@ -140,58 +143,17 @@ def make_BCH2014_data(theta = 0.5, n_obs=100, dim_x = 200, rho = 0.5,
     #return x, y, d, true_betas, orcl_rmse, dgp_info
     return x, y, d, true_betas, dgp_info
 
-"""
-# compute in- and out-of-sample MSE
-def plr_in_and_out_of_sample_mse(dml_plr_obj: dml.DoubleMLPLR, 
-                                 ml_l_dml_model, ml_m_dml_model, 
-                                 dml_train_data_obj: dml.DoubleMLData, 
-                                 dml_test_data_obj: dml.DoubleMLData):
-
-    
-    
-    Computes MSE of Model Predictions in Training- and Test-Data.
-
-    Args:
-        dml_plr_obj: DoubleML-PLR-Model to observe causal parameter theta.
-        ml_l_dml_model: Nuisance function for regression on y.
-        ml_m_dml_model: Nuisance function for regression on d.
-        dml_train_data_obj: dml data object for training.
-        dml_test_data_obj: dml data object for testing.
-
-    Returns:
-        in_sample_mse, out_of_sample_mse (float): mean squared errors to detect performance of the model.
-    
-    
-
-    X_train = dml_train_data_obj.data.drop(['y', 'd'], axis=1).to_numpy()
-    y_train = dml_train_data_obj.data['y'].to_numpy()
-    #d_train = dml_train_data_obj.data['d'].to_numpy()
-
-    X_test = dml_test_data_obj.data.drop(['y', 'd'], axis=1).to_numpy()
-    y_test = dml_test_data_obj.data['y'].to_numpy()
-    #d_test = dml_test_data_obj.data['d'].to_numpy()
-
-    d_pred_train = ml_m_dml_model.predict(X_train)
-    d_train = dml_train_data_obj.data[dml_train_data_obj.d_cols].values
-    #y_pred_train = d_pred_train*dml_plr_obj.coef[0] + ml_l_dml_model.predict(X_train)
-    y_pred_train = d_train*dml_plr_obj.coef[0] + ml_l_dml_model.predict(X_train)
-    in_sample_mse = np.mean((y_train - y_pred_train)**2)
-
-    d_pred_test = ml_m_dml_model.predict(X_test)
-    d_test = dml_test_data_obj.data[dml_test_data_obj.d_cols].values
-    #y_pred_test = d_pred_test*dml_plr_obj.coef[0] + ml_l_dml_model.predict(X_test)
-    y_pred_test = d_test*dml_plr_obj.coef[0] + ml_l_dml_model.predict(X_test)
-    out_of_sample_mse = np.mean((y_test - y_pred_test)**2)
-
-    return in_sample_mse, out_of_sample_mse
-"""
-
 # PLR gradient boosting simulation
 def simulate_gb_plr(data, ml_l, ml_m, ml_g=None, n_folds=1, score='partialling out', random_seed=1312):
 
     """
     Fits data and nuisance models as gradient boosting to PLR model.
 
+    Args:
+        TODO
+
+    Returns:
+        TODO
 
     """
 
@@ -419,7 +381,7 @@ def plot_lasso_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
                             figsize=(10*len(ml_l_hyperparameters), 10*len(ml_m_hyperparameters)), 
                             constrained_layout=True)
 
-    fig.suptitle(title, fontsize=30)
+    fig.suptitle(title, fontsize=50)
 
     for i_ml_m in ml_m_hyperparameters:
         for i_ml_l in ml_l_hyperparameters:
@@ -446,8 +408,8 @@ def plot_lasso_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
             axs[i_l, i_m].axvline(0., color='k')
             axs[i_l, i_m].plot(xx, yy, color='k', label='$\\mathcal{N}(0, 1)$')
             #axs[i_l, i_m].legend(loc='upper right', bbox_to_anchor=(1.2, 1.0))
-            axs[len(ml_l_hyperparameters)-1, i_m].set_xlabel('$\\lambda_{m_{0}(x)}$=' + f'{i_ml_m}', fontsize=20)
-            axs[i_l, 0].set_ylabel('$\\lambda_{g_{0}(x)}$=' + f'{i_ml_l}', fontsize=20)
+            axs[len(ml_l_hyperparameters)-1, i_m].set_xlabel('$\\lambda_{m_{0}(x)}$=' + f'{i_ml_m}', fontsize=35)
+            axs[i_l, 0].set_ylabel('$\\lambda_{g_{0}(x)}$=' + f'{i_ml_l}', fontsize=35)
             axs[i_l, i_m].set_xlim([-6., 6.])
 
     if save_figure: 
