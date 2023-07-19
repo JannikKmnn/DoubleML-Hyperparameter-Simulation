@@ -12,6 +12,7 @@ from doubleml.datasets import make_plr_CCDDHNR2018, make_pliv_CHS2015, make_irm_
 from sklearn.linear_model import Lasso, LassoCV
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.base import clone
 from scipy.linalg import toeplitz
 
 import warnings
@@ -462,6 +463,70 @@ def plot_lasso_coverage(ml_l_hyperparameters, ml_m_hyperparameters, coverage_sco
         plt.savefig(f"plots/{filename}", facecolor="white")
 
     plt.show()
+
+# Gradient Boosting Results
+def plot_gb_plr_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
+                                 n_folds, data, true_alpha, tunable_hyperparameter: str,
+                                 ml_l_model, ml_m_model,
+                                 face_colors = sns.color_palette('summer_r'),
+                                 edge_colors = sns.color_palette('dark'),
+                                 title="Hyperparameter Variation for Gradient Boosting",
+                                 xlabels='${m_{0}(x)}$=', ylabel='${g_{0}(x)}$=',
+                                 save_figure=True,
+                                 filename=""):
+    
+    """
+    TODO write function documentation
+    """
+
+    xx = np.arange(-5, +5, 0.001)
+    yy = stats.norm.pdf(xx)
+
+    scores = []
+    distributions_calculated = 1
+
+    fig, axs = plt.subplots(len(ml_l_hyperparameters), len(ml_m_hyperparameters), 
+                            figsize=(10*len(ml_l_hyperparameters), 10*len(ml_m_hyperparameters)), 
+                            constrained_layout=True)
+
+    fig.suptitle(f"{title}", fontsize=40)
+
+    for ml_l_param in ml_l_hyperparameters:
+        for ml_m_param in ml_m_hyperparameters:
+
+            i_m = ml_m_hyperparameters.index(ml_m_param)
+            i_l = ml_l_hyperparameters.index(ml_l_param)
+
+            ml_l = clone(ml_l_model).set_params(**{tunable_hyperparameter: ml_l_param})
+            ml_m = clone(ml_m_model).set_params(**{tunable_hyperparameter: ml_m_param})
+            
+            theta_scores, se_scores, model_objects = simulate_gb_plr(ml_l=ml_l, ml_m=ml_m, n_folds=n_folds, data=data, score='partialling out')
+
+            scores.append((theta_scores, se_scores, model_objects,
+                           f"ml_l-{tunable_hyperparameter}: {ml_l_param}", 
+                           f"ml_m-{tunable_hyperparameter}: {ml_m_param}"))
+
+            print(f"Distributions calculated: {distributions_calculated}")
+            
+            axs[i_l, i_m].hist((theta_scores - true_alpha)/se_scores,
+                                color=face_colors[2], edgecolor = edge_colors[2],
+                                density=True, bins=30, label='Double ML Gradient Boosting')
+            axs[i_l, i_m].axvline(0., color='k')
+            axs[i_l, i_m].plot(xx, yy, color='k', label='$\\mathcal{N}(0, 1)$')
+            #axs[i_l, i_m].legend(loc='upper right', bbox_to_anchor=(1.2, 1.0))
+            axs[len(ml_l_hyperparameters)-1, i_m].set_xlabel(xlabels + f'{ml_m_param}', fontsize=20)
+            axs[i_l, 0].set_ylabel(ylabel + f'{ml_l_param}', fontsize=30)
+            axs[i_l, i_m].set_xlim([-6., 6.])
+
+            distributions_calculated += 1
+
+    if save_figure:
+        plt.savefig(f"plots/{filename}", facecolor="white")
+
+    plt.show()
+
+    return scores
+
 
 # TODO write cv results function
 
