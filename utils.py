@@ -432,7 +432,7 @@ def plot_lasso_abs_bias(ml_l_hyperparameters, ml_m_hyperparameters, bias_scores,
 
     plt.figure(figsize=(2.5*len(ml_l_hyperparameters), 2*len(ml_m_hyperparameters)))
     plt.title(f"{title}", fontsize=14)
-    sns.heatmap(pivot_table_bias, cmap='summer_r', annot=True)
+    sns.heatmap(pivot_table_bias, cmap='summer', annot=True)
     plt.xlabel('$\\lambda_{m_{0}(x)}$', fontsize=14)
     plt.ylabel('$\\lambda_{g_{0}(x)}$', fontsize=14)
 
@@ -455,7 +455,7 @@ def plot_lasso_coverage(ml_l_hyperparameters, ml_m_hyperparameters, coverage_sco
 
     plt.figure(figsize=(2.5*len(ml_l_hyperparameters), 2*len(ml_m_hyperparameters)))
     plt.title(f"{title}", fontsize=14)
-    sns.heatmap(pivot_table_coverage, cmap='summer', annot=True, fmt='.2f')
+    sns.heatmap(pivot_table_coverage, cmap='summer_r', annot=True, fmt='.2f')
     plt.xlabel('$\\lambda_{m_{0}(x)}$', fontsize=14)
     plt.ylabel('$\\lambda_{g_{0}(x)}$', fontsize=14)
 
@@ -463,6 +463,45 @@ def plot_lasso_coverage(ml_l_hyperparameters, ml_m_hyperparameters, coverage_sco
         plt.savefig(f"plots/{filename}", facecolor="white")
 
     plt.show()
+
+def plot_bias_coverage_next_to_eachother(ml_l_hyperparameters, ml_m_hyperparameters,
+                                         bias_scores, coverage_scores,
+                                         suptitle="Hyperparameter Combinations for Lasso Regression",
+                                         bias_title="Mean Absolute Bias",
+                                         coverage_title="Coverage (%)",
+                                         save_fig=True, filename=""):
+
+    """
+    TODO write function documentations
+    """
+
+    bias_list = [(k[0], k[1], v) for k, v in bias_scores.items()]
+    lasso_bias_df = pd.DataFrame(bias_list, columns=['ml_l_alphas', 'ml_m_alphas', 'bias'])
+    pivot_table_bias = lasso_bias_df.pivot(index='ml_l_alphas', columns='ml_m_alphas', values='bias')
+
+    coverage_list = [(k[0], k[1], v*100) for k, v in coverage_scores.items()]
+    lasso_coverage_df = pd.DataFrame(coverage_list, columns=['ml_l_alphas', 'ml_m_alphas', 'coverage'])
+    pivot_table_coverage = lasso_coverage_df.pivot(index='ml_l_alphas', columns='ml_m_alphas', values='coverage')
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(5*len(ml_l_hyperparameters), 2*len(ml_m_hyperparameters)))
+    fig.suptitle(suptitle, fontsize=16)
+    
+    g1 = sns.heatmap(pivot_table_bias, cmap='summer', annot=True, ax=ax1)
+    g1.set_title(f"{bias_title}", fontsize=14)
+    g1.set_xlabel('$\\lambda_{m_{0}(x)}$', fontsize=12)
+    g1.set_ylabel('$\\lambda_{g_{0}(x)}$', fontsize=12)
+
+    g2 = sns.heatmap(pivot_table_coverage, cmap='summer_r', annot=True, fmt='.2f', ax=ax2)
+    g2.set_title(f"{coverage_title}", fontsize=14)
+    g2.set_xlabel('$\\lambda_{m_{0}(x)}$', fontsize=12)
+
+    fig.tight_layout()
+
+    if save_fig:
+        plt.savefig(f"plots/{filename}", facecolor="white")
+
+    plt.show()
+    
 
 # Gradient Boosting Results
 def plot_gb_plr_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
