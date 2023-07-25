@@ -521,7 +521,10 @@ def plot_gb_plr_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
     xx = np.arange(-5, +5, 0.001)
     yy = stats.norm.pdf(xx)
 
-    scores = []
+    coverage_scores = dict()
+    bias_scores = dict()
+
+    #scores = []
     distributions_calculated = 1
 
     fig, axs = plt.subplots(len(ml_l_hyperparameters), len(ml_m_hyperparameters), 
@@ -541,9 +544,15 @@ def plot_gb_plr_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
             
             theta_scores, se_scores, model_objects = simulate_gb_plr(ml_l=ml_l, ml_m=ml_m, n_folds=n_folds, data=data, score='partialling out')
 
-            scores.append((theta_scores, se_scores, model_objects,
-                           f"ml_l-{tunable_hyperparameter}: {ml_l_param}", 
-                           f"ml_m-{tunable_hyperparameter}: {ml_m_param}"))
+            coverage_score = coverage(true_alpha, model_objects)
+            coverage_scores[(i_l, i_m)] = coverage_score
+
+            absolute_bias = abs_bias(true_alpha, theta_scores)
+            bias_scores[(i_l, i_m)] = absolute_bias
+
+            #scores.append((theta_scores, se_scores, model_objects,
+            #               f"ml_l-{tunable_hyperparameter}: {ml_l_param}", 
+            #               f"ml_m-{tunable_hyperparameter}: {ml_m_param}"))
 
             print(f"Distributions calculated: {distributions_calculated}")
             
@@ -564,7 +573,7 @@ def plot_gb_plr_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
 
     plt.show()
 
-    return scores
+    return coverage_scores, bias_scores#, scores
 
 
 # TODO write cv results function
