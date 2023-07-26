@@ -215,6 +215,65 @@ def simulate_gb_plr(data, ml_l, ml_m, ml_g=None, n_folds=1, score='partialling o
 
     return theta_scores, se_scores, dml_plr_objects
 
+def simulate_gb_irm(data, ml_l, ml_m, n_folds=5, score='ATE', random_seed=1312):
+
+    """
+    Fits data and nuisance models as gradient boosting to IRM model. 
+    'ml_m' is required to be a classification estimator since the treatment variable $D$ is binary.
+
+    Args:
+        TODO
+
+    Returns:
+        TODO
+
+    """
+
+    np.random.seed(random_seed)
+
+    apply_cross_fitting = True
+
+    n_rep = len(data)
+
+    theta_scores = np.zeros(shape=(n_rep,))
+    se_scores = np.zeros(shape=(n_rep,))
+
+    assert isinstance(ml_m, GradientBoostingClassifier), "'ml_m' needs to be a GradientBoostingClassifier."
+
+    dml_plr_objects = []
+
+    for i_rep in range(n_rep):
+
+        if type(data[i_rep]) == tuple:
+            (x, y, d) = data[i_rep]
+            dml_obj_data = dml.DoubleMLData.from_arrays(x, y, d)
+        else:
+            dml_obj_data = dml.DoubleMLData(data, 'y', 'd')
+
+        n_obs = dml_obj_data.n_obs
+
+        dml_obj_data = dml.DoubleMLData(dml_obj_data.data, 'y', 'd')
+
+        if n_folds == 1: apply_cross_fitting = False
+
+        dml_plr_obj = dml.DoubleMLIRM(dml_obj_data,
+                                      ml_l, ml_m,
+                                      n_folds=n_folds,
+                                      score=score,
+                                      apply_cross_fitting=apply_cross_fitting)
+        
+        dml_plr_obj.fit(store_models=True)
+
+        this_theta = dml_plr_obj.coef[0]
+        this_se = dml_plr_obj.se[0]
+
+        theta_scores[i_rep] = this_theta
+        se_scores[i_rep] = this_se
+
+        dml_plr_objects.append(dml_plr_obj)
+
+    return theta_scores, se_scores, dml_plr_objects
+
 
 
 # PLR lasso simulation
@@ -545,6 +604,77 @@ def plot_gb_plr_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
             ml_m = clone(ml_m_model).set_params(**{tunable_hyperparameter: ml_m_param})
             
             theta_scores, se_scores, model_objects = simulate_gb_plr(ml_l=ml_l, ml_m=ml_m, n_folds=n_folds, data=data, score='partialling out')
+
+            coverage_score = coverage(true_alpha, model_objects)
+            coverage_scores[(ml_l_param, ml_m_param)] = coverage_score
+
+            absolute_bias = abs_bias(true_alpha, theta_scores)
+            bias_scores[(ml_l_param, ml_m_param)] = absolute_bias
+
+            #scores.append((theta_scores, se_scores, model_objects,
+            #               f"ml_l-{tunable_hyperparameter}: {ml_l_param}", 
+            #               f"ml_m-{tunable_hyperparameter}: {ml_m_param}"))
+
+            print(f"Distributions calculated: {distributions_calculated}")
+            
+            axs[i_l, i_m].hist((theta_scores - true_alpha)/se_scores,
+                                color=face_colors[2], edgecolor = edge_colors[2],
+                                density=True, bins=30, label='Double ML Gradient Boosting')
+            axs[i_l, i_m].axvline(0., color='k')
+            axs[i_l, i_m].plot(xx, yy, color='k', label='$\\mathcal{N}(0, 1)$')
+            #axs[i_l, i_m].legend(loc='upper right', bbox_to_anchor=(1.2, 1.0))
+            axs[len(ml_l_hyperparameters)-1, i_m].set_xlabel(xlabels + f'{ml_m_param}', fontsize=20)
+            axs[i_l, 0].set_ylabel(ylabel + f'{ml_l_param}', fontsize=30)
+            axs[i_l, i_m].set_xlim([-6., 6.])
+
+            distributions_calculated += 1
+
+    if save_figure:
+        plt.savefig(f"plots/{filename}", facecolor="white")
+
+    plt.show()
+
+    return coverage_scores, bias_scores#, scores
+
+def plot_gb_irm_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
+                                 n_folds, data, true_alpha, tunable_hyperparameter: str,
+                                 ml_l_model, ml_m_model,
+                                 face_colors = sns.color_palette('summer_r'),
+                                 edge_colors = sns.color_palette('dark'),
+                                 title="Hyperparameter Variation for Gradient Boosting",
+                                 xlabels='${m_{0}(x)}$=', ylabel='${g_{0}(x)}$=',
+                                 save_figure=True,
+                                 filename=""):
+    
+    """
+    TODO write function documentation
+    """
+
+    xx = np.arange(-5, +5, 0.001)
+    yy = stats.norm.pdf(xx)
+
+    coverage_scores = dict()
+    bias_scores = dict()
+
+    #scores = []
+    distributions_calculated = 1
+
+    fig, axs = plt.subplots(len(ml_l_hyperparameters), len(ml_m_hyperparameters), 
+                            figsize=(10*len(ml_l_hyperparameters), 10*len(ml_m_hyperparameters)), 
+                            constrained_layout=True)
+
+    fig.suptitle(f"{title}", fontsize=40)
+
+    for ml_l_param in ml_l_hyperparameters:
+        for ml_m_param in ml_m_hyperparameters:
+
+            i_m = ml_m_hyperparameters.index(ml_m_param)
+            i_l = ml_l_hyperparameters.index(ml_l_param)
+
+            ml_l = clone(ml_l_model).set_params(**{tunable_hyperparameter: ml_l_param})
+            ml_m = clone(ml_m_model).set_params(**{tunable_hyperparameter: ml_m_param})
+            
+            theta_scores, se_scores, model_objects = simulate_gb_irm(ml_l=ml_l, ml_m=ml_m, n_folds=n_folds, data=data, score='ATE')
 
             coverage_score = coverage(true_alpha, model_objects)
             coverage_scores[(ml_l_param, ml_m_param)] = coverage_score
