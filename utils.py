@@ -469,6 +469,8 @@ def plot_bias_coverage_next_to_eachother(ml_l_hyperparameters, ml_m_hyperparamet
                                          suptitle="Hyperparameter Combinations for Lasso Regression",
                                          bias_title="Mean Absolute Bias",
                                          coverage_title="Coverage (%)",
+                                         xlabel='$\\lambda_{m_{0}(x)}$',
+                                         ylabel='$\\lambda_{g_{0}(x)}$',
                                          save_fig=True, filename=""):
 
     """
@@ -488,12 +490,12 @@ def plot_bias_coverage_next_to_eachother(ml_l_hyperparameters, ml_m_hyperparamet
     
     g1 = sns.heatmap(pivot_table_bias, cmap='summer', annot=True, ax=ax1)
     g1.set_title(f"{bias_title}", fontsize=14)
-    g1.set_xlabel('$\\lambda_{m_{0}(x)}$', fontsize=12)
-    g1.set_ylabel('$\\lambda_{g_{0}(x)}$', fontsize=12)
+    g1.set_xlabel(xlabel, fontsize=12)
+    g1.set_ylabel(ylabel, fontsize=12)
 
     g2 = sns.heatmap(pivot_table_coverage, cmap='summer_r', annot=True, fmt='.2f', ax=ax2)
     g2.set_title(f"{coverage_title}", fontsize=14)
-    g2.set_xlabel('$\\lambda_{m_{0}(x)}$', fontsize=12)
+    g2.set_xlabel(xlabel, fontsize=12)
 
     fig.tight_layout()
 
@@ -545,10 +547,10 @@ def plot_gb_plr_variation_results(ml_l_hyperparameters, ml_m_hyperparameters,
             theta_scores, se_scores, model_objects = simulate_gb_plr(ml_l=ml_l, ml_m=ml_m, n_folds=n_folds, data=data, score='partialling out')
 
             coverage_score = coverage(true_alpha, model_objects)
-            coverage_scores[(i_l, i_m)] = coverage_score
+            coverage_scores[(ml_l_param, ml_m_param)] = coverage_score
 
             absolute_bias = abs_bias(true_alpha, theta_scores)
-            bias_scores[(i_l, i_m)] = absolute_bias
+            bias_scores[(ml_l_param, ml_m_param)] = absolute_bias
 
             #scores.append((theta_scores, se_scores, model_objects,
             #               f"ml_l-{tunable_hyperparameter}: {ml_l_param}", 
