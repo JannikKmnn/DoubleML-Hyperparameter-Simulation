@@ -547,12 +547,12 @@ def plot_bias_coverage_next_to_eachother(ml_l_hyperparameters, ml_m_hyperparamet
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(5*len(ml_l_hyperparameters), 2*len(ml_m_hyperparameters)))
     fig.suptitle(suptitle, fontsize=16)
     
-    g1 = sns.heatmap(pivot_table_bias, cmap='summer', annot=True, ax=ax1)
+    g1 = sns.heatmap(pivot_table_bias, cmap='summer', annot=True, annot_kws={"fontsize":15}, ax=ax1)
     g1.set_title(f"{bias_title}", fontsize=14)
     g1.set_xlabel(xlabel, fontsize=12)
     g1.set_ylabel(ylabel, fontsize=12)
 
-    g2 = sns.heatmap(pivot_table_coverage, cmap='summer_r', annot=True, fmt='.2f', ax=ax2)
+    g2 = sns.heatmap(pivot_table_coverage, cmap='summer_r', annot=True, fmt='.2f', annot_kws={"fontsize":15}, ax=ax2)
     g2.set_title(f"{coverage_title}", fontsize=14)
     g2.set_xlabel(xlabel, fontsize=12)
 
