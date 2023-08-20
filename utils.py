@@ -555,6 +555,7 @@ def plot_bias_coverage_next_to_eachother(ml_l_hyperparameters, ml_m_hyperparamet
     g2 = sns.heatmap(pivot_table_coverage, cmap='summer_r', annot=True, fmt='.2f', annot_kws={"fontsize":15}, ax=ax2)
     g2.set_title(f"{coverage_title}", fontsize=14)
     g2.set_xlabel(xlabel, fontsize=12)
+    g2.set_ylabel('', fontsize=12)
 
     fig.tight_layout()
 
