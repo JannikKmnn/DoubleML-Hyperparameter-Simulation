@@ -3,7 +3,6 @@
 The modeling of partial linear regression models (PLR) is done based on Chernozhukov et. al. (2018):
 
 $$Y = \theta_{0}D + g_{0}(X) + \zeta$$
-
 $$D = m_{0}(X) + V$$
 
 ### References
