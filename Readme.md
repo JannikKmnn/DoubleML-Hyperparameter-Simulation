@@ -5,4 +5,5 @@ The modeling of partial linear regression models (PLR) is done based on Chernozh
 $$Y = \theta_{0}D + g_{0}(X) + \zeta$$
 $$D = m_{0}(X) + V$$
 
+Where $E[\zeta|D,X]=0$ and $E[V|X]=0$.
 ### References
